@@ -5,7 +5,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const dir = path.dirname(fileURLToPath(import.meta.url));
-const file = process.env.DB_FILE || path.join(dir, '..', 'data', 'db.json');
+// Vercel's filesystem is read-only apart from /tmp, which is wiped whenever the function restarts.
+const file = process.env.DB_FILE
+  || (process.env.VERCEL ? '/tmp/tyre-db.json' : path.join(dir, '..', 'data', 'db.json'));
 
 const empty = () => ({ orders: [], bookings: [], subscribers: [] });
 
