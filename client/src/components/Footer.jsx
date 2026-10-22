@@ -60,7 +60,7 @@ export default function Footer() {
         </div>
       </div>
       <div className="container footer-bottom">
-        <span>© {new Date().getFullYear()} tyre.com. Demo project, built for an internship task.</span>
+        <span>© {new Date().getFullYear()} tyre.com. All rights reserved.</span>
         <span>Prices in AUD incl. GST</span>
       </div>
     </footer>
