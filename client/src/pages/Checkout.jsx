@@ -4,6 +4,7 @@ import Field from '../components/Field.jsx';
 import AppointmentPicker from '../components/AppointmentPicker.jsx';
 import Icon from '../components/Icon.jsx';
 import { api, money } from '../api.js';
+import { saveOrder } from '../savedOrders.js';
 import { useCart } from '../context/CartContext.jsx';
 
 export default function Checkout() {
@@ -53,6 +54,7 @@ export default function Checkout() {
         addAlignment,
         vehicle,
       });
+      saveOrder(order);
       clear();
       navigate(`/order/${order.id}`, { replace: true });
     } catch (err) {

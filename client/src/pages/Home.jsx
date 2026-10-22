@@ -66,7 +66,7 @@ export default function Home() {
             <div className="hero-trust">
               <div><strong>4.8<span className="star">★</span></strong><span>12,000+ reviews</span></div>
               <hr />
-              <div><strong>12</strong><span>Premium brands</span></div>
+              <div><strong>12</strong><span>Leading brands</span></div>
               <hr />
               <div><strong>8</strong><span>Fitting centres</span></div>
             </div>

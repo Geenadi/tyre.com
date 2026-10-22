@@ -2,17 +2,26 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import Icon from '../components/Icon.jsx';
 import { api, money } from '../api.js';
+import { findOrder } from '../savedOrders.js';
 
 const longDate = (d) =>
   new Date(`${d}T00:00:00`).toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
 export default function OrderSuccess() {
   const { id } = useParams();
-  const [order, setOrder] = useState(null);
+  // Show the copy saved at checkout straight away, then prefer the server's version if it still has one.
+  const [order, setOrder] = useState(() => findOrder(id));
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    api.order(id).then(setOrder).catch((e) => setError(e.message));
+    let live = true;
+    const saved = findOrder(id);
+    setOrder(saved);
+    setError(null);
+    api.order(id)
+      .then((o) => live && setOrder(o))
+      .catch((e) => live && !saved && setError(e.message));
+    return () => { live = false; };
   }, [id]);
 
   if (error) {
