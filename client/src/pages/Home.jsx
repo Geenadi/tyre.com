@@ -53,7 +53,6 @@ export default function Home() {
       <section className="hero">
         <div className="container hero-inner">
           <div className="hero-copy">
-            <span className="eyebrow">Australia-wide · 8 stores + mobile fitting</span>
             <h1>The right tyres at the best price, <span className="accent">fitted.</span></h1>
             <p>
               Compare over 100 tyres from 12 leading brands. Buy online and choose a fitting time at a store

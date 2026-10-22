@@ -3,10 +3,10 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Icon from './Icon.jsx';
 import { useCart } from '../context/CartContext.jsx';
 
-// NavLink only compares pathnames, so Tyres and Deals (same path, different query) need their own check.
+// Deals are the tyre listing with the "On sale" filter, so they share the Tyres link.
 const links = [
-  { to: '/tyres', label: 'Tyres', isActive: (l) => l.pathname.startsWith('/tyres') && !l.search.includes('onSale=true') },
-  { to: '/tyres?onSale=true', label: 'Deals', isActive: (l) => l.pathname === '/tyres' && l.search.includes('onSale=true') },
+  { to: '/', label: 'Home', isActive: (l) => l.pathname === '/' },
+  { to: '/tyres', label: 'Tyres & Deals' },
   { to: '/brands', label: 'Brands' },
   { to: '/services', label: 'Services' },
   { to: '/stores', label: 'Find a store' },
