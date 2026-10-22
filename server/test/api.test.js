@@ -74,3 +74,28 @@ test('service booking succeeds', async () => {
   assert.equal(res.status, 201);
   assert.equal((await res.json()).estimate, 148);
 });
+
+test('brand facet counts match the results for the other active filters', async () => {
+  const { facets } = await get('/tyres?onSale=true&inStock=true');
+  for (const f of facets.brands) {
+    const { total } = await get(`/tyres?onSale=true&inStock=true&brand=${f.value}`);
+    assert.equal(f.count, total, `${f.value} facet says ${f.count}, results show ${total}`);
+  }
+});
+
+test('a facet ignores its own selection so other options keep their counts', async () => {
+  const all = await get('/tyres');
+  const picked = await get('/tyres?brand=michelin');
+  assert.deepEqual(picked.facets.brands, all.facets.brands);
+  const michelin = picked.facets.categories.reduce((n, f) => n + f.count, 0);
+  assert.equal(michelin, picked.total);
+});
+
+test('brand list matches the catalogue', async () => {
+  const brands = await get('/brands');
+  const { facets } = await get('/tyres');
+  for (const b of brands) {
+    assert.equal(b.count, facets.brands.find((f) => f.value === b.id).count);
+    assert.ok(b.inStock <= b.count);
+  }
+});

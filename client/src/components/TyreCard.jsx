@@ -2,13 +2,23 @@ import { Link } from 'react-router-dom';
 import TyreImage from './TyreImage.jsx';
 import Stars from './Stars.jsx';
 import { money } from '../api.js';
-import { useCart } from '../context/CartContext.jsx';
+import { useCart, maxQty } from '../context/CartContext.jsx';
 import { useToast } from './Toast.jsx';
 
 export default function TyreCard({ tyre }) {
-  const { add } = useCart();
+  const { add, items } = useCart();
   const toast = useToast();
   const soldOut = tyre.stock === 0;
+  const inCart = items.find((i) => i.id === tyre.id)?.qty || 0;
+  const room = maxQty(tyre) - inCart;
+  // A set is 4, or whatever is left if stock is lower.
+  const setQty = Math.min(4, tyre.stock);
+
+  const addQty = (qty) => {
+    const added = Math.min(qty, room);
+    add(tyre, added);
+    toast(`Added ${added} × ${tyre.brandName} ${tyre.pattern} to cart`);
+  };
   const saving = tyre.rrp ? Math.round(((tyre.rrp - tyre.price) / tyre.rrp) * 100) : 0;
 
   return (
@@ -38,16 +48,22 @@ export default function TyreCard({ tyre }) {
           </div>
           {tyre.rrp ? <div className="rrp">{money(tyre.rrp)}</div> : <div className="fitted">Fitted &amp; balanced</div>}
         </div>
-        <button
-          className="btn btn-dark btn-block"
-          disabled={soldOut}
-          onClick={() => {
-            add(tyre, 4);
-            toast(`Added 4 × ${tyre.brandName} ${tyre.pattern} to cart`);
-          }}
-        >
-          {soldOut ? 'Out of stock' : 'Add set of 4'}
-        </button>
+        {soldOut ? (
+          <button className="btn btn-dark btn-block" disabled>Out of stock</button>
+        ) : room <= 0 ? (
+          <button className="btn btn-dark btn-block" disabled>Max in cart</button>
+        ) : (
+          <div className="card-actions">
+            <button className="btn btn-outline" onClick={() => addQty(1)} aria-label={`Add 1 ${tyre.brandName} ${tyre.pattern} to cart`}>
+              Add 1
+            </button>
+            {setQty > 1 && (
+              <button className="btn btn-dark" onClick={() => addQty(setQty)}>
+                {setQty === 4 ? 'Add set of 4' : `Add ${setQty}`}
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </article>
   );

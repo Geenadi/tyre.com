@@ -16,7 +16,10 @@ app.get('/api/health', (_req, res) => res.json({ ok: true }));
 
 app.get('/api/brands', (_req, res) => {
   res.json(
-    brands.map((b) => ({ ...b, count: tyres.filter((t) => t.brand === b.id).length }))
+    brands.map((b) => {
+      const own = tyres.filter((t) => t.brand === b.id);
+      return { ...b, count: own.length, inStock: own.filter((t) => t.stock > 0).length };
+    })
   );
 });
 
@@ -43,21 +46,24 @@ app.get('/api/tyres', (req, res) => {
   const sizeSel = list(size);
   const needle = q ? String(q).toLowerCase() : null;
 
-  let result = tyres.filter(
-    (t) =>
+  // One predicate per filter group, so facet counts can apply every filter except their own.
+  const filters = {
+    size: (t) =>
       (!width || t.width === Number(width)) &&
       (!profile || t.profile === Number(profile)) &&
       (!rim || t.rim === Number(rim)) &&
-      (!sizeSel || sizeSel.includes(t.size)) &&
-      (!brandsSel || brandsSel.includes(t.brand)) &&
-      (!catSel || catSel.includes(t.category)) &&
-      (!terrainSel || terrainSel.includes(t.terrain)) &&
-      (!minPrice || t.price >= Number(minPrice)) &&
-      (!maxPrice || t.price <= Number(maxPrice)) &&
-      (onSale !== 'true' || t.rrp) &&
-      (inStock !== 'true' || t.stock > 0) &&
-      (!needle || `${t.brandName} ${t.pattern} ${t.size} ${t.category}`.toLowerCase().includes(needle))
-  );
+      (!sizeSel || sizeSel.includes(t.size)),
+    brand: (t) => !brandsSel || brandsSel.includes(t.brand),
+    category: (t) => !catSel || catSel.includes(t.category),
+    terrain: (t) => !terrainSel || terrainSel.includes(t.terrain),
+    price: (t) => (!minPrice || t.price >= Number(minPrice)) && (!maxPrice || t.price <= Number(maxPrice)),
+    onSale: (t) => onSale !== 'true' || Boolean(t.rrp),
+    inStock: (t) => inStock !== 'true' || t.stock > 0,
+    q: (t) => !needle || `${t.brandName} ${t.pattern} ${t.size} ${t.category}`.toLowerCase().includes(needle),
+  };
+  const matches = (t, except) => Object.entries(filters).every(([name, fn]) => name === except || fn(t));
+
+  let result = tyres.filter((t) => matches(t));
 
   const sorters = {
     popular: (a, b) => b.reviews - a.reviews,
@@ -67,18 +73,15 @@ app.get('/api/tyres', (req, res) => {
   };
   result = [...result].sort(sorters[sort] || sorters.popular);
 
-  // Facet counts are computed on the size-filtered set so the sidebar shows
-  // what's actually available for the customer's tyre size.
-  const sizeScoped = tyres.filter(
-    (t) =>
-      (!width || t.width === Number(width)) &&
-      (!profile || t.profile === Number(profile)) &&
-      (!rim || t.rim === Number(rim)) &&
-      (!sizeSel || sizeSel.includes(t.size))
-  );
-  const count = (key) =>
-    Object.entries(sizeScoped.reduce((acc, t) => ({ ...acc, [t[key]]: (acc[t[key]] || 0) + 1 }), {}))
-      .map(([value, n]) => ({ value, count: n }));
+  // The options shown are everything available in the customer's size, so the sidebar
+  // doesn't jump around. Each count is how many results ticking that option would add:
+  // every other active filter applies, but not the facet's own selection.
+  const sizeScoped = tyres.filter(filters.size);
+  const count = (key) => {
+    const options = [...new Set(sizeScoped.map((t) => t[key]))];
+    const pool = tyres.filter((t) => matches(t, key));
+    return options.map((value) => ({ value, count: pool.filter((t) => t[key] === value).length }));
+  };
 
   res.json({
     total: result.length,

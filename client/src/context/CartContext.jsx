@@ -3,6 +3,10 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 const CartContext = createContext(null);
 const KEY = 'tyrecom.cart';
 
+// Most you can order of one tyre: 8, or fewer if that's all the stock left.
+// Older saved carts have no stock snapshot, so they fall back to 8 and the server checks at checkout.
+export const maxQty = (item) => Math.min(8, item.stock ?? 8);
+
 function loadCart() {
   try {
     const parsed = JSON.parse(localStorage.getItem(KEY));
@@ -32,13 +36,13 @@ export function CartProvider({ children }) {
       setItems((cur) => {
         const existing = cur.find((i) => i.id === tyre.id);
         if (existing) {
-          return cur.map((i) => (i.id === tyre.id ? { ...i, qty: Math.min(8, i.qty + qty) } : i));
+          return cur.map((i) => (i.id === tyre.id ? { ...i, stock: tyre.stock, qty: Math.min(maxQty(tyre), i.qty + qty) } : i));
         }
-        const { id, brandName, pattern, size, price, brand, category } = tyre;
-        return [...cur, { id, brandName, pattern, size, price, brand, category, qty }];
+        const { id, brandName, pattern, size, price, brand, category, stock } = tyre;
+        return [...cur, { id, brandName, pattern, size, price, brand, category, stock, qty: Math.min(maxQty(tyre), qty) }];
       });
     const update = (id, qty) =>
-      setItems((cur) => cur.map((i) => (i.id === id ? { ...i, qty: Math.max(1, Math.min(8, qty)) } : i)));
+      setItems((cur) => cur.map((i) => (i.id === id ? { ...i, qty: Math.max(1, Math.min(maxQty(i), qty)) } : i)));
     const remove = (id) => setItems((cur) => cur.filter((i) => i.id !== id));
     const clear = () => setItems([]);
     const count = items.reduce((s, i) => s + i.qty, 0);

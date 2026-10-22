@@ -2,7 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import TyreImage from '../components/TyreImage.jsx';
 import Icon from '../components/Icon.jsx';
 import { money } from '../api.js';
-import { useCart } from '../context/CartContext.jsx';
+import { useCart, maxQty } from '../context/CartContext.jsx';
 
 export default function Cart() {
   const { items, update, remove, count, subtotal, vehicle } = useCart();
@@ -44,7 +44,7 @@ export default function Cart() {
               <div className="qty">
                 <button onClick={() => update(i.id, i.qty - 1)} aria-label="Decrease quantity" disabled={i.qty <= 1}>−</button>
                 <span>{i.qty}</span>
-                <button onClick={() => update(i.id, i.qty + 1)} aria-label="Increase quantity" disabled={i.qty >= 8}>+</button>
+                <button onClick={() => update(i.id, i.qty + 1)} aria-label="Increase quantity" disabled={i.qty >= maxQty(i)}>+</button>
               </div>
               <strong className="cart-line-total">{money(i.price * i.qty)}</strong>
               <button className="icon-btn" onClick={() => remove(i.id)} aria-label={`Remove ${i.pattern}`}>

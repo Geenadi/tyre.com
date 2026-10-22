@@ -20,8 +20,13 @@ function FacetGroup({ title, name, options, selected, onToggle }) {
     <fieldset className="facet">
       <legend>{title}</legend>
       {options.map((o) => (
-        <label key={o.value} className="check">
-          <input type="checkbox" checked={selected.includes(o.value)} onChange={() => onToggle(name, o.value)} />
+        <label key={o.value} className={`check ${o.count === 0 && !selected.includes(o.value) ? 'check-empty' : ''}`}>
+          <input
+            type="checkbox"
+            checked={selected.includes(o.value)}
+            disabled={o.count === 0 && !selected.includes(o.value)}
+            onChange={() => onToggle(name, o.value)}
+          />
           <span>{o.label || o.value}</span>
           <span className="facet-count">{o.count}</span>
         </label>
